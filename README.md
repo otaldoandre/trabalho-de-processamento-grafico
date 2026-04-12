@@ -38,9 +38,24 @@ Cada integrante será responsável por implementar um objeto 3D correspondente a
 - **16/04** → Finalizar planetas  
 - **30/04** → Entrega geral  
 
-## Como clonar
-Para começar a desenvolver o projeto no seu PC, utilize o seguinte comando no terminal:
+## Como executar
+
+### 1. Clone o repositório
 ```bash
 git clone https://github.com/otaldoandre/trabalho-de-processamento-grafico.git
+```
 
+### 2. Acesse a pasta do projeto
+```bash
+cd trabalho-de-processamento-grafico
+```
 
+### 3. Inicie o servidor local
+```bash
+npx serve src
+```
+
+### 4. Abra no navegador
+Acesse [http://localhost:3000](http://localhost:3000)
+
+> Não abra o `index.html` diretamente no navegador!! As texturas não vão carregar.
