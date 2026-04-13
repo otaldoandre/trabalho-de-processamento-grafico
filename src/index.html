@@ -33,10 +33,19 @@
     const sun = new THREE.Mesh(sunGeometry, sunMaterial);
     scene.add(sun);
 
-    // Animação do Sol (necessário, se não a cena não será renderizada)
+    // Criação da Terra
+    const earthGeometry = new THREE.SphereGeometry(0.2, 64, 32);
+    const earthTexture = textureLoader.load("./textures/2k_earth_daymap.jpg");
+    const earthMaterial = new THREE.MeshBasicMaterial({ map: earthTexture });
+    const earth = new THREE.Mesh(earthGeometry, earthMaterial);
+    earth.position.set(6,0,0);
+    scene.add(earth);
+
+    // Animação do Sol e Terra (necessário, se não a cena não será renderizada)
     function animate() {
       requestAnimationFrame(animate);
       sun.rotation.y += 0.002;
+      earth.rotation.y += 0.1;
       renderer.render(scene, camera);
     }
     animate();
