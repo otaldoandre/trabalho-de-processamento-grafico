@@ -34,16 +34,17 @@
     scene.add(sun);
 
     //Criação do Mercúrio
-    const mercGeometry = new THREE.SphereGeometry(5, 32, 16);
+    const mercGeometry = new THREE.SphereGeometry(1, 32, 16);
     const mercMaterial = new THREE.MeshBasicMaterial( { color: 0x808080} );
     const merc = new THREE.Mesh(mercGeometry, mercMaterial);
+    merc.position.x = 5;
     scene.add(merc);
 
     //Animação do Mercurio 
      function animate() {
       requestAnimationFrame(animate);
        sun.rotation.y += 0.002;
-      merc.rotation.y += 0.0001;
+       merc.rotation.y += 0.0001;
       renderer.render(scene, camera);
     }
     animate();
