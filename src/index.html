@@ -47,6 +47,14 @@
     const merc = new THREE.Mesh(mercGeometry, mercMaterial);
     scene.add(merc);
 
+    //Animação do Mercurio 
+     function animate() {
+      requestAnimationFrame(animate);
+      merc.rotation.y += 0.0001;
+      renderer.render(scene, camera);
+    }
+    animate();
+
     // Ajuste do tamanho da janela em caso de redimensionamento (zoom in e zoom out)
     window.addEventListener('resize', () => {
       camera.aspect = window.innerWidth / window.innerHeight;
