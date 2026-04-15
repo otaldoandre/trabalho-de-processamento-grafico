@@ -41,6 +41,11 @@
     }
     animate();
 
+    //Criação do Mercúrio
+    const mercGeometry = new THREE.SphereGeometry(1, 32, 16);
+    const mercMaterial = new THREE.MeshBasicMaterial( { color: 0x808080} );
+    scene.add(merc);
+
     // Ajuste do tamanho da janela em caso de redimensionamento (zoom in e zoom out)
     window.addEventListener('resize', () => {
       camera.aspect = window.innerWidth / window.innerHeight;
