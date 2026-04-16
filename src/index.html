@@ -19,7 +19,7 @@
     const camera = new THREE.PerspectiveCamera(
       75, window.innerWidth / window.innerHeight, 0.1, 1000
     );
-    camera.position.z = 5;
+    camera.position.z = 15;
 
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -37,7 +37,7 @@
     const mercGeometry = new THREE.SphereGeometry(1, 64, 32);
     const texturemercLoader = new THREE.TextureLoader();
     const mercTexture = textureLoader.load("./textures/2k_mercury.jpg");
-    const mercMaterial = new THREE.MeshBasicMaterial({ color: 0x808080});
+    const mercMaterial = new THREE.MeshBasicMaterial({ map: mercTexture});
     const merc = new THREE.Mesh(mercGeometry, mercMaterial);
     merc.position.set(5, 0, 0);
     scene.add(merc);
