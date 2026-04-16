@@ -34,7 +34,7 @@
     scene.add(sun);
 
     //Criação do Mercúrio
-    const mercGeometry = new THREE.SphereGeometry(1, 32, 16);
+    const mercGeometry = new THREE.SphereGeometry(1, 64, 32);
     const mercMaterial = new THREE.MeshBasicMaterial( { color: 0x808080} );
     const merc = new THREE.Mesh(mercGeometry, mercMaterial);
     merc.position.x = 5;
