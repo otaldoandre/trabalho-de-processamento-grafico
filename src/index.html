@@ -35,6 +35,8 @@
 
     //Criação do Mercúrio
     const mercGeometry = new THREE.SphereGeometry(1, 64, 32);
+    const texturemercLoader = new THREE.TextureLoader();
+    const mercTexture = textureLoader.load("./textures/2k_mercury.jpg");
     const mercMaterial = new THREE.MeshBasicMaterial( { color: 0x808080} );
     const merc = new THREE.Mesh(mercGeometry, mercMaterial);
     merc.position.x = 5;
