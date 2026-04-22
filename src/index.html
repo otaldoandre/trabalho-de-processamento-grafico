@@ -50,6 +50,14 @@
     merc.position.set(10, 0, 0);
     scene.add(merc);
 
+    //Criação de Vênus
+    const venusGeometry = new THREE.SphereGeometry (2.0, 64, 32);
+    const venusTexture = textureLoader.load("./textures/2k_venus.jpg");
+    const venusMaterial = new THREE.MeshBasicMaterial({ map: venusTexture });
+    const venus = new THREE.Mesh(venusGeometry, venusMaterial);
+    venus.position.set(16, 0, 0); 
+    scene.add(venus);
+
     // Animação do Sol e Terra (necessário, se não a cena não será renderizada)
     function animate() {
         requestAnimationFrame(animate);
@@ -57,6 +65,9 @@
         earth.rotation.y += 0.2;
     //Animação do Mercurio 
         merc.rotation.y += 0.0034;
+        renderer.render(scene, camera);
+    //Rotação de Vênus
+        venus.rotation.y += 0.004; 
         renderer.render(scene, camera);
     }
     animate();
