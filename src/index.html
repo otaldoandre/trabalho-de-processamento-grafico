@@ -9,27 +9,36 @@
   </style>
 </head>
 <body>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-  <script>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+  <script type="module">
+    import * as THREE from 'three';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
     // Configuração da cena, câmera e renderizador
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
 
     const camera = new THREE.PerspectiveCamera(
-      75, window.innerWidth / window.innerHeight, 0.1, 1000
+            75, window.innerWidth / window.innerHeight, 0.1, 1000
     );
     camera.position.z = 15;
 
     const camera2 = new THREE.PerspectiveCamera(
-      80, window.innerWidth / window.innerHeight, 0.1, 1000
+            80, window.innerWidth / window.innerHeight, 0.1, 1000
     );
     camera2.position.z = 18;
     const w = 1920;
     const h = 1080;
     const fullWidth = w * 3;
     const fullHeight = h * 2;
-    camera2.setViewOffset( fullWidth, fullHeight, 500, 500, w, h );
+    camera2.setViewOffset(fullWidth, fullHeight, 500, 500, w, h);
     /*const aspect = window.innerWidth / window.innerHeight;
 
     const camera = new THREE.OrthographicCamera(
@@ -49,54 +58,78 @@
     const sunGeometry = new THREE.SphereGeometry(6, 64, 32);
     const textureLoader = new THREE.TextureLoader();
     const sunTexture = textureLoader.load("./textures/2k_sun.jpg");
-    const sunMaterial = new THREE.MeshBasicMaterial({ map: sunTexture });
+    const sunMaterial = new THREE.MeshBasicMaterial({map: sunTexture});
     const sun = new THREE.Mesh(sunGeometry, sunMaterial);
     scene.add(sun);
 
     // Criação da Terra
     const earthGeometry = new THREE.SphereGeometry(2.1, 64, 32);
     const earthTexture = textureLoader.load("./textures/2k_earth_daymap.jpg");
-    const earthMaterial = new THREE.MeshBasicMaterial({ map: earthTexture });
+    const earthMaterial = new THREE.MeshBasicMaterial({map: earthTexture});
     const earth = new THREE.Mesh(earthGeometry, earthMaterial);
-    earth.position.set(-19,0,0);
+    earth.position.set(-19, 0, 0);
     scene.add(earth);
 
     //Criação do Mercúrio
     const mercGeometry = new THREE.SphereGeometry(0.9, 64, 32);
     const texturemercLoader = new THREE.TextureLoader();
     const mercTexture = textureLoader.load("./textures/2k_mercury.jpg");
-    const mercMaterial = new THREE.MeshBasicMaterial({ map: mercTexture});
+    const mercMaterial = new THREE.MeshBasicMaterial({map: mercTexture});
     const merc = new THREE.Mesh(mercGeometry, mercMaterial);
     merc.position.set(10, 0, 0);
     scene.add(merc);
 
     //Criação de Vênus
-    const venusGeometry = new THREE.SphereGeometry (2.0, 64, 32);
+    const venusGeometry = new THREE.SphereGeometry(2.0, 64, 32);
     const venusTexture = textureLoader.load("./textures/2k_venus.jpg");
-    const venusMaterial = new THREE.MeshBasicMaterial({ map: venusTexture });
+    const venusMaterial = new THREE.MeshBasicMaterial({map: venusTexture});
     const venus = new THREE.Mesh(venusGeometry, venusMaterial);
-    venus.position.set(16, 0, 0); 
+    venus.position.set(16, 0, 0);
     scene.add(venus);
+
+    const gltfLoader = new GLTFLoader();
+    gltfLoader.load('./models/little_prince.glb', (gltf) => {
+      const object = gltf.scene;
+      console.log('Objeto GLB carregado:', object);
+
+       // REDUZIR MUITO A ESCALA primeiro
+      object.scale.set(0.022, 0.022, 0.022); // Comece pequeno
+
+      // Posicionar EXATAMENTE acima do Mercúrio
+      object.position.set(10, 2.5, 0); // x=10 (mercúrio), y=3 (acima), z=0
+
+      // Rotacionar se necessário
+      object.rotation.x = 0;
+      object.rotation.y = -5;
+      object.rotation.z = 0;
+
+      scene.add(object);
+      console.log('Objeto adicionado à cena');
+    }, undefined, (error) => {
+      console.error('Erro ao carregar objeto:', error);
+    });
 
     let useOrtho = true;
     let cameraused = useOrtho ? camera : camera2;
     window.addEventListener("keydown", (event) => {
-    if (event.key === "c") {
+      if (event.key === "c") {
         useOrtho = !useOrtho;
         cameraused = useOrtho ? camera : camera2;
-    }
-});
+      }
+    });
+
     // Animação do Sol e Terra (necessário, se não a cena não será renderizada)
     function animate() {
-        requestAnimationFrame(animate);
-        sun.rotation.y += 0.0067;
-        earth.rotation.y += 0.2;
-    //Animação do Mercurio 
-        merc.rotation.y += 0.0034;
-    //Rotação de Vênus
-        venus.rotation.y += 0.0008; 
-        renderer.render(scene, cameraused);
+      requestAnimationFrame(animate);
+      sun.rotation.y += 0.0067;
+      earth.rotation.y += 0.2;
+      //Animação do Mercurio
+      merc.rotation.y += 0.0034;
+      //Rotação de Vênus
+      venus.rotation.y += 0.0008;
+      renderer.render(scene, cameraused);
     }
+
     animate();
 
     // Ajuste do tamanho da janela em caso de redimensionamento (zoom in e zoom out)
@@ -105,6 +138,7 @@
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
+
   </script>
 </body>
 </html>
