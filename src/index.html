@@ -88,7 +88,8 @@
     const mercGeometry = new THREE.SphereGeometry(0.9, 64, 32);
     const texturemercLoader = new THREE.TextureLoader();
     const mercTexture = textureLoader.load("./textures/2k_mercury.jpg");
-    const mercMaterial = new THREE.MeshBasicMaterial({map: mercTexture});
+    const normalTexture = textureLoader.load("./textures/normal_bump_texture");
+    const mercMaterial = new THREE.MeshBasicMaterial({map: mercTexture, normalMap: normalTexture});
     const merc = new THREE.Mesh(mercGeometry, mercMaterial);
     merc.position.set(10, 0, 0);
     scene.add(merc);
@@ -131,10 +132,11 @@
           map: mainCosmicDustTexture,
           side: THREE.DoubleSide,
           transparent: true,
-          opacity: 0.5,
-          blending: THREE.AdditiveBlending // Isso faz as cores "somarem" e brilharem
+          opacity: 1,
+          blending: THREE.AdditiveBlending
       });
-    const geometrySphere = new THREE.SphereGeometry(1000, 32, 32); // Mais segmentos = textura mais suave
+
+    const geometrySphere = new THREE.IcosahedronGeometry(850, 15); // Mais segmentos = textura mais suave
     const geometrySphere_ = new THREE.Mesh(geometrySphere, materialSprite);
     scene.add(geometrySphere_);
 
