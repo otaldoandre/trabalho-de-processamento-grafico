@@ -123,6 +123,24 @@
       console.error('Erro ao carregar objeto:', error);
     });
 
+
+
+    // Nuvem de poeira
+    const mainCosmicDustTexture = textureLoader.load("./textures/main_cosmic_dust.png");
+    const materialSprite = new THREE.MeshStandardMaterial({
+          map: mainCosmicDustTexture,
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity: 0.5,
+          blending: THREE.AdditiveBlending // Isso faz as cores "somarem" e brilharem
+      });
+    const geometrySphere = new THREE.SphereGeometry(1000, 32, 32); // Mais segmentos = textura mais suave
+    const geometrySphere_ = new THREE.Mesh(geometrySphere, materialSprite);
+    scene.add(geometrySphere_);
+
+
+
+
     // Adicionar estrelas
     const geometry = new THREE.BufferGeometry();
     const vertices = [];
