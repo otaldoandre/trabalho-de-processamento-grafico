@@ -23,7 +23,8 @@
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
     // Configuração da cena, câmera e renderizador
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x000000);
+    scene.background = new THREE.Color(0x030342); // Azul quase preto
+    scene.fog = new THREE.Fog(0x030342, 0.002); // Objetos longe somem na cor do fundo
 
     const camera = new THREE.PerspectiveCamera(
             75, window.innerWidth / window.innerHeight, 0.1, 1000
@@ -121,6 +122,20 @@
     }, undefined, (error) => {
       console.error('Erro ao carregar objeto:', error);
     });
+
+    // Adicionar estrelas
+    const geometry = new THREE.BufferGeometry();
+    const vertices = [];
+    for (let i = 0; i < 10000; i++) {
+        const x = THREE.MathUtils.randFloatSpread( 2000 );
+	    const y = THREE.MathUtils.randFloatSpread( 2000 );
+	    const z = THREE.MathUtils.randFloatSpread( 2000 );
+	    vertices.push( x, y, z );
+    }
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+    const material_ = new THREE.PointsMaterial({ color: 0x888888, size: 1 });
+    const points = new THREE.Points(geometry, material_);
+    scene.add(points);
 
     let useOrtho = true;
     let cameraused = useOrtho ? camera : camera2;
