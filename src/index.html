@@ -20,7 +20,7 @@
   <script type="module">
     import * as THREE from 'three';
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
     // Configuração da cena, câmera e renderizador
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
@@ -53,6 +53,19 @@
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
+
+    // Adicionar controle orbital
+    const controls = new OrbitControls(camera, renderer.domElement);
+
+    // Adicionar peso a rotação da câmera
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.1;
+
+    // Configurações de zoom in e zoom out
+    controls.minDistance = 15;
+    controls.maxDistance = 30;
+    camera.position.set( 0, 20, 100 );
+    controls.update();
 
     // Criação do Sol
     const sunGeometry = new THREE.SphereGeometry(6, 64, 32);
@@ -127,6 +140,7 @@
       merc.rotation.y += 0.0034;
       //Rotação de Vênus
       venus.rotation.y += 0.0008;
+      controls.update();
       renderer.render(scene, cameraused);
     }
 
