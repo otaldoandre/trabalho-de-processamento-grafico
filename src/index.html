@@ -81,7 +81,7 @@
     const earthTexture = textureLoader.load("./textures/2k_earth_daymap.jpg");
     const earthMaterial = new THREE.MeshBasicMaterial({map: earthTexture});
     const earth = new THREE.Mesh(earthGeometry, earthMaterial);
-    earth.position.set(-19, 0, 0);
+    earth.position.set(-23, 0, 0);
     scene.add(earth);
 
     //Criação do Mercúrio
@@ -99,9 +99,9 @@
     const venusTexture = textureLoader.load("./textures/2k_venus.jpg");
     const venusMaterial = new THREE.MeshBasicMaterial({map: venusTexture});
     const venus = new THREE.Mesh(venusGeometry, venusMaterial);
-    venus.position.set(16, 0, 0);
+    venus.position.set(0, 0, 0);
     scene.add(venus);
-
+    let little_prince;
     const gltfLoader = new GLTFLoader();
     gltfLoader.load('./models/little_prince.glb', (gltf) => {
       const object = gltf.scene;
@@ -119,6 +119,7 @@
       object.rotation.z = 0;
 
       scene.add(object);
+      little_prince = object;
       console.log('Objeto adicionado à cena');
     }, undefined, (error) => {
       console.error('Erro ao carregar objeto:', error);
@@ -165,7 +166,9 @@
         cameraused = useOrtho ? camera : camera2;
       }
     });
-
+    let venus_angle = 0;
+    let merc_angle = 0;
+    let earth_angle = 0;
     // Animação do Sol e Terra (necessário, se não a cena não será renderizada)
     function animate() {
       requestAnimationFrame(animate);
@@ -175,6 +178,16 @@
       merc.rotation.y += 0.0034;
       //Rotação de Vênus
       venus.rotation.y += 0.0008;
+      venus.position.set(16*Math.cos(venus_angle),0,16*Math.sin(venus_angle));
+      venus_angle += 2*Math.PI/225
+      venus_angle = venus_angle%(2*Math.PI);
+      merc.position.set(-10*Math.cos(merc_angle),0,-10*Math.sin(merc_angle))
+      little_prince.position.set(-10*Math.cos(merc_angle),2.5,-10*Math.sin(merc_angle))
+      merc_angle += 2*Math.PI/88;
+      merc_angle = merc_angle%(2*Math.PI);
+      earth.position.set(24*Math.cos(earth_angle),0,24*Math.sin(earth_angle));
+      earth_angle += 2*Math.PI/365;
+      earth_angle = earth_angle%(2*Math.PI);
       controls.update();
       renderer.render(scene, cameraused);
     }
