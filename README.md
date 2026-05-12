@@ -11,16 +11,16 @@ O grupo irá desenvolver uma **simulação parcial do sistema solar**, represent
 Cada integrante será responsável por implementar um objeto 3D correspondente a um corpo celeste, aplicando conceitos como:
 - Geometria e posicionamento
 - Texturas
-- Movimento/rotação
+- Movimento/rotação/translação
 - Shaders
 - Diferentes câmeras para visualização
 
 ## Especificações a serem atendidas
-- [ ] Cada membro cria um objeto 3D individual
-- [ ] Aplicação de textura em pelo menos um objeto
-- [ ] Movimento simples em pelo menos um objeto
-- [ ] Shader próprio em um dos objetos
-- [ ] Definição de pelo menos duas câmeras
+- [x] Cada membro cria um objeto 3D individual
+- [x] Aplicação de textura em pelo menos um objeto
+- [x] Movimento simples em pelo menos um objeto
+- [x] Shader próprio em um dos objetos
+- [x] Definição de pelo menos duas câmeras
 - [ ] Documentação no GitHub (este README)
 
 ## Divisão de tarefas
@@ -28,11 +28,15 @@ Cada integrante será responsável por implementar um objeto 3D correspondente a
 - Mercúrio → Carol  
 - Vênus → Nícolas  
 - Terra → Rick  
-- Objeto com textura (Sol) → [nome]  
-- Objeto com rotação (Terra) → [nome]  
-- Objeto com shader (Sol) → [nome]  
+- Objeto com textura (Sol) → Nícolas e Carol  
+- Objetos com rotação → todos os integrantes 
+- Objeto com shader (Sol) → Nícolas e Carol  
 - Câmeras → [nome]  
 - Documentação → [nome]  
+
+## Interação Atual da Cena
+- Aperte a tecla **[C]** para alternar entre as câmeras.
+- Use o mouse para rotacionar e dar zoom na cena.
 
 ## Cronograma
 - **16/04** → Finalizar planetas  

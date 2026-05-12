@@ -54,94 +54,83 @@
     camera.position.set(0, 20, 100);
     controls.update();
 
-    // ─── SHADER DO SOL ───────────────────────────────────────────────────────
+    // ─── SHADER DO SOL (referencia: vídeo do Yuri Artiukh) ────────────────────────────────────────
     const sunVertexShader = `
-      varying vec2 vUv;
-      varying vec3 vNormal;
-      varying vec3 vPosition;
+      uniform mat4 projectionMatrix;
+      uniform mat4 viewMatrix;
+      uniform mat4 modelMatrix;
 
+      attribute vec3 position;
+      attribute vec3 normal;
+
+      varying vec3 vPosition;
+      varying vec3 vNormal;
+      varying vec3 vWorldPosition; // <-- ADICIONADO
+      
       void main() {
-        vUv = uv;
-        vNormal = normalize(normalMatrix * normal);
         vPosition = position;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        vNormal = normalize(mat3(modelMatrix) * normal);
+        
+        vec4 worldPos = modelMatrix * vec4(position, 1.0);
+        vWorldPosition = worldPos.xyz; // <-- ADICIONADO
+        
+        gl_Position = projectionMatrix * viewMatrix * worldPos;
       }
     `;
 
     const sunFragmentShader = `
+      precision mediump float;
+
       uniform float uTime;
-      uniform sampler2D uSunTexture;
-      varying vec2 vUv;
-      varying vec3 vNormal;
+      uniform vec3 cameraPosition; // <-- ADICIONADO: Posição real da câmera
+      
       varying vec3 vPosition;
+      varying vec3 vNormal;
+      varying vec3 vWorldPosition; // <-- ADICIONADO
 
-      // Hash sem branch para GLSL ES
-      float hash(vec2 p) {
-        vec3 p3 = fract(vec3(p.xyx) * 0.1031);
-        p3 += dot(p3, p3.yzx + 33.33);
-        return fract((p3.x + p3.y) * p3.z);
+      float hash(vec3 p) {
+        p = fract(p * 0.3183099 + 0.1);
+        p *= 17.0;
+        return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
       }
 
-      // Noise suave 2D
-      float noise(vec2 p) {
-        vec2 i = floor(p);
-        vec2 f = fract(p);
-        vec2 u = f * f * (3.0 - 2.0 * f);
-        return mix(
-          mix(hash(i + vec2(0,0)), hash(i + vec2(1,0)), u.x),
-          mix(hash(i + vec2(0,1)), hash(i + vec2(1,1)), u.x),
-          u.y
-        );
+      float noise(vec3 x) {
+        vec3 i = floor(x);
+        vec3 f = fract(x);
+        f = f * f * (3.0 - 2.0 * f);
+        return mix(mix(mix(hash(i+vec3(0,0,0)), hash(i+vec3(1,0,0)), f.x), mix(hash(i+vec3(0,1,0)), hash(i+vec3(1,1,0)), f.x), f.y), mix(mix(hash(i+vec3(0,0,1)), hash(i+vec3(1,0,1)), f.x), mix(hash(i+vec3(0,1,1)), hash(i+vec3(1,1,1)), f.x), f.y), f.z);
       }
 
-      // FBM - fractal brownian motion para granulação solar
-      float fbm(vec2 p) {
-        float v = 0.0;
-        float a = 0.5;
-        vec2 shift = vec2(100.0);
-        mat2 rot = mat2(cos(0.5), sin(0.5), -sin(0.5), cos(0.5));
-        for (int i = 0; i < 6; i++) {
-          v += a * noise(p);
-          p = rot * p * 2.0 + shift;
-          a *= 0.5;
+      float fbm(vec3 p) {
+        float v = 0.0; float a = 0.5;
+        for (int i = 0; i < 5; i++) {
+          v += a * noise(p); p = p * 2.0; a *= 0.5;
         }
         return v;
       }
 
       void main() {
-        // Textura base do sol
-        vec4 texColor = texture2D(uSunTexture, vUv);
+        vec3 p = normalize(vPosition) * 4.0;
+        float t = uTime * 0.2;
+        
+        float noiseLayer1 = fbm(p + vec3(t, 0.0, 0.0));
+        float noiseLayer2 = fbm(p + vec3(0.0, -t, 0.0));
+        float noiseLayer3 = fbm(p + vec3(0.0, 0.0, t));
 
-        // Granulação solar animada com FBM
-        vec2 uv = vUv * 8.0;
-        float t = uTime * 0.08;
-        vec2 q = vec2(fbm(uv + t), fbm(uv + vec2(1.0)));
-        float granulation = fbm(uv + 1.0 * q + vec2(1.7, 9.2) + 0.15 * t);
+        float brightness = (noiseLayer1 + noiseLayer2 + noiseLayer3) / 3.0;
+        brightness = brightness * 1.5;
 
-        // Manchas solares procedurais
-        float spots = fbm(vUv * 4.0 + uTime * 0.02);
-        float darkSpot = smoothstep(0.62, 0.58, spots) * 0.4;
+        float b = brightness;
+        vec3 color = vec3(b, b * b, b * b * b * b);
+        color *= 1.4;
 
-        // Cor base misturada com granulação
-        vec3 hotColor  = vec3(1.0, 0.9, 0.3);   // amarelo quente
-        vec3 coolColor = vec3(0.95, 0.4, 0.05);  // laranja-vermelho
-        vec3 coreColor = mix(coolColor, hotColor, granulation);
-        vec3 sunColor  = mix(coreColor, texColor.rgb, 0.45);
+        // <-- O CALCULO CORRETO DO FRESNEL BASEADO NA SUA CÂMERA -->
+        vec3 viewDir = normalize(cameraPosition - vWorldPosition); 
+        float fresnel = 1.0 - max(dot(vNormal, viewDir), 0.0);
+        fresnel = pow(fresnel, 3.0);
+        color += vec3(1.0, 0.6, 0.1) * fresnel * 0.8;
 
-        // Escurecer manchas solares
-        sunColor = mix(sunColor, sunColor * 0.3, darkSpot);
-
-        // Rim glow (limb darkening reverso — brilho nas bordas, padrão solar)
-        float rim = 1.0 - max(dot(vNormal, vec3(0.0, 0.0, 1.0)), 0.0);
-        rim = pow(rim, 2.5);
-        vec3 rimColor = vec3(1.0, 0.6, 0.1);
-        sunColor += rimColor * rim * 0.6;
-
-        // Pulsação de emissão
-        float pulse = 0.92 + 0.08 * sin(uTime * 1.2);
-        sunColor *= pulse;
-
-        gl_FragColor = vec4(sunColor, 1.0);
+        gl_FragColor = vec4(color, 1.0);
       }
     `;
 
@@ -150,14 +139,14 @@
     const sunTexture = textureLoader.load("./textures/2k_sun.jpg");
 
     const sunUniforms = {
-      uTime:       { value: 0.0 },
-      uSunTexture: { value: sunTexture }
+      uTime: { value: 0.0 },
+      cameraPosition: { value: camera.position }
     };
 
-    const sunMaterial = new THREE.ShaderMaterial({
-      vertexShader:   sunVertexShader,
+    const sunMaterial = new THREE.RawShaderMaterial({
+      vertexShader: sunVertexShader,
       fragmentShader: sunFragmentShader,
-      uniforms:       sunUniforms
+      uniforms: sunUniforms
     });
 
     const sunGeometry = new THREE.SphereGeometry(6, 64, 32);
@@ -276,8 +265,7 @@
     // ─── MERCÚRIO ─────────────────────────────────────────────────────────────
     const mercGeometry = new THREE.SphereGeometry(0.9, 64, 32);
     const mercTexture = textureLoader.load("./textures/2k_mercury.jpg");
-    const normalTexture = textureLoader.load("./textures/normal_bump_texture");
-    const mercMaterial = new THREE.MeshBasicMaterial({ map: mercTexture, normalMap: normalTexture });
+    const mercMaterial = new THREE.MeshBasicMaterial({ map: mercTexture });
     const merc = new THREE.Mesh(mercGeometry, mercMaterial);
     merc.position.set(10, 0, 0);
     scene.add(merc);
@@ -388,6 +376,7 @@
     window.addEventListener('resize', () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
+
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
   </script>
