@@ -21,18 +21,18 @@
     import * as THREE from 'three';
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-    // Configuração da cena, câmera e renderizador
+
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x030342); // Azul quase preto
-    scene.fog = new THREE.Fog(0x030342, 0.002); // Objetos longe somem na cor do fundo
+    scene.background = new THREE.Color(0x030342);
+    scene.fog = new THREE.Fog(0x030342, 0.002);
 
     const camera = new THREE.PerspectiveCamera(
-            75, window.innerWidth / window.innerHeight, 0.1, 1000
+      75, window.innerWidth / window.innerHeight, 0.1, 1000
     );
     camera.position.z = 15;
 
     const camera2 = new THREE.PerspectiveCamera(
-            80, window.innerWidth / window.innerHeight, 0.1, 1000
+      80, window.innerWidth / window.innerHeight, 0.1, 1000
     );
     camera2.position.z = 18;
     const w = 1920;
@@ -40,124 +40,299 @@
     const fullWidth = w * 3;
     const fullHeight = h * 2;
     camera2.setViewOffset(fullWidth, fullHeight, 500, 500, w, h);
-    /*const aspect = window.innerWidth / window.innerHeight;
 
-    const camera = new THREE.OrthographicCamera(
-        -aspect * 5, // left
-        aspect * 5, // right
-        5,          // top
-        -5,          // bottom
-        0.1,        // near
-        1000        // far
-    );*/
-
-    const renderer = new THREE.WebGLRenderer();
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
     document.body.appendChild(renderer.domElement);
 
-    // Adicionar controle orbital
     const controls = new OrbitControls(camera, renderer.domElement);
-
-    // Adicionar peso a rotação da câmera
     controls.enableDamping = true;
     controls.dampingFactor = 0.1;
-
-    // Configurações de zoom in e zoom out
     controls.minDistance = 15;
     controls.maxDistance = 30;
-    camera.position.set( 0, 20, 100 );
+    camera.position.set(0, 20, 100);
     controls.update();
 
-    // Criação do Sol
-    const sunGeometry = new THREE.SphereGeometry(6, 64, 32);
+    // ─── SHADER DO SOL ───────────────────────────────────────────────────────
+    const sunVertexShader = `
+      varying vec2 vUv;
+      varying vec3 vNormal;
+      varying vec3 vPosition;
+
+      void main() {
+        vUv = uv;
+        vNormal = normalize(normalMatrix * normal);
+        vPosition = position;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `;
+
+    const sunFragmentShader = `
+      uniform float uTime;
+      uniform sampler2D uSunTexture;
+      varying vec2 vUv;
+      varying vec3 vNormal;
+      varying vec3 vPosition;
+
+      // Hash sem branch para GLSL ES
+      float hash(vec2 p) {
+        vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+        p3 += dot(p3, p3.yzx + 33.33);
+        return fract((p3.x + p3.y) * p3.z);
+      }
+
+      // Noise suave 2D
+      float noise(vec2 p) {
+        vec2 i = floor(p);
+        vec2 f = fract(p);
+        vec2 u = f * f * (3.0 - 2.0 * f);
+        return mix(
+          mix(hash(i + vec2(0,0)), hash(i + vec2(1,0)), u.x),
+          mix(hash(i + vec2(0,1)), hash(i + vec2(1,1)), u.x),
+          u.y
+        );
+      }
+
+      // FBM - fractal brownian motion para granulação solar
+      float fbm(vec2 p) {
+        float v = 0.0;
+        float a = 0.5;
+        vec2 shift = vec2(100.0);
+        mat2 rot = mat2(cos(0.5), sin(0.5), -sin(0.5), cos(0.5));
+        for (int i = 0; i < 6; i++) {
+          v += a * noise(p);
+          p = rot * p * 2.0 + shift;
+          a *= 0.5;
+        }
+        return v;
+      }
+
+      void main() {
+        // Textura base do sol
+        vec4 texColor = texture2D(uSunTexture, vUv);
+
+        // Granulação solar animada com FBM
+        vec2 uv = vUv * 8.0;
+        float t = uTime * 0.08;
+        vec2 q = vec2(fbm(uv + t), fbm(uv + vec2(1.0)));
+        float granulation = fbm(uv + 1.0 * q + vec2(1.7, 9.2) + 0.15 * t);
+
+        // Manchas solares procedurais
+        float spots = fbm(vUv * 4.0 + uTime * 0.02);
+        float darkSpot = smoothstep(0.62, 0.58, spots) * 0.4;
+
+        // Cor base misturada com granulação
+        vec3 hotColor  = vec3(1.0, 0.9, 0.3);   // amarelo quente
+        vec3 coolColor = vec3(0.95, 0.4, 0.05);  // laranja-vermelho
+        vec3 coreColor = mix(coolColor, hotColor, granulation);
+        vec3 sunColor  = mix(coreColor, texColor.rgb, 0.45);
+
+        // Escurecer manchas solares
+        sunColor = mix(sunColor, sunColor * 0.3, darkSpot);
+
+        // Rim glow (limb darkening reverso — brilho nas bordas, padrão solar)
+        float rim = 1.0 - max(dot(vNormal, vec3(0.0, 0.0, 1.0)), 0.0);
+        rim = pow(rim, 2.5);
+        vec3 rimColor = vec3(1.0, 0.6, 0.1);
+        sunColor += rimColor * rim * 0.6;
+
+        // Pulsação de emissão
+        float pulse = 0.92 + 0.08 * sin(uTime * 1.2);
+        sunColor *= pulse;
+
+        gl_FragColor = vec4(sunColor, 1.0);
+      }
+    `;
+
+    // Material shader do Sol
     const textureLoader = new THREE.TextureLoader();
     const sunTexture = textureLoader.load("./textures/2k_sun.jpg");
-    const sunMaterial = new THREE.MeshBasicMaterial({map: sunTexture});
+
+    const sunUniforms = {
+      uTime:       { value: 0.0 },
+      uSunTexture: { value: sunTexture }
+    };
+
+    const sunMaterial = new THREE.ShaderMaterial({
+      vertexShader:   sunVertexShader,
+      fragmentShader: sunFragmentShader,
+      uniforms:       sunUniforms
+    });
+
+    const sunGeometry = new THREE.SphereGeometry(6, 64, 32);
     const sun = new THREE.Mesh(sunGeometry, sunMaterial);
     scene.add(sun);
 
-    // Criação da Terra
+    // ─── CORONA (halo ao redor do sol) ──────────────────────────────────────
+    const coronaVertexShader = `
+      varying vec3 vNormal;
+      varying vec3 vPosition;
+      void main() {
+        vNormal   = normalize(normalMatrix * normal);
+        vPosition = position;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `;
+
+    const coronaFragmentShader = `
+      uniform float uTime;
+      varying vec3 vNormal;
+      varying vec3 vPosition;
+
+      float hash(vec2 p) {
+        vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+        p3 += dot(p3, p3.yzx + 33.33);
+        return fract((p3.x + p3.y) * p3.z);
+      }
+
+      float noise(vec2 p) {
+        vec2 i = floor(p);
+        vec2 f = fract(p);
+        vec2 u = f * f * (3.0 - 2.0 * f);
+        return mix(
+          mix(hash(i + vec2(0,0)), hash(i + vec2(1,0)), u.x),
+          mix(hash(i + vec2(0,1)), hash(i + vec2(1,1)), u.x),
+          u.y
+        );
+      }
+
+      void main() {
+        // Fresnel — visível apenas nas bordas
+        vec3 viewDir = normalize(cameraPosition - vPosition);
+        float fresnel = 1.0 - max(dot(vNormal, viewDir), 0.0);
+        fresnel = pow(fresnel, 3.0);
+
+        // Variação de ruído para corona irregular
+        float t = uTime * 0.15;
+        vec2 uv = vec2(atan(vPosition.z, vPosition.x) * 0.159 + t, vPosition.y * 0.1);
+        float n = noise(uv * 3.0) * 0.5 + noise(uv * 7.0 + 0.3) * 0.3;
+
+        float corona = fresnel * (0.7 + 0.3 * n);
+
+        // Pulsação suave
+        float pulse = 0.85 + 0.15 * sin(uTime * 0.8);
+        corona *= pulse;
+
+        vec3 color = mix(vec3(1.0, 0.4, 0.0), vec3(1.0, 0.9, 0.3), n);
+        gl_FragColor = vec4(color, corona * 0.75);
+      }
+    `;
+
+    const coronaUniforms = { uTime: { value: 0.0 } };
+
+    const coronaMaterial = new THREE.ShaderMaterial({
+      vertexShader:   coronaVertexShader,
+      fragmentShader: coronaFragmentShader,
+      uniforms:       coronaUniforms,
+      side:           THREE.BackSide,
+      transparent:    true,
+      blending:       THREE.AdditiveBlending,
+      depthWrite:     false
+    });
+
+    const coronaGeometry = new THREE.SphereGeometry(7.2, 64, 32);
+    const corona = new THREE.Mesh(coronaGeometry, coronaMaterial);
+    scene.add(corona);
+
+    // ─── HALO EXTERNO (glow difuso) ──────────────────────────────────────────
+    const glowMaterial = new THREE.ShaderMaterial({
+      vertexShader: coronaVertexShader,
+      fragmentShader: `
+        uniform float uTime;
+        varying vec3 vNormal;
+        varying vec3 vPosition;
+        void main() {
+          vec3 viewDir = normalize(cameraPosition - vPosition);
+          float fresnel = 1.0 - max(dot(vNormal, viewDir), 0.0);
+          fresnel = pow(fresnel, 5.0);
+          float pulse = 0.9 + 0.1 * sin(uTime * 0.6);
+          gl_FragColor = vec4(1.0, 0.6, 0.1, fresnel * 0.35 * pulse);
+        }
+      `,
+      uniforms:    { uTime: { value: 0.0 }, cameraPosition: { value: camera.position } },
+      side:        THREE.BackSide,
+      transparent: true,
+      blending:    THREE.AdditiveBlending,
+      depthWrite:  false
+    });
+
+    const glowGeometry = new THREE.SphereGeometry(9.0, 32, 32);
+    const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+    scene.add(glow);
+
+    // Luz pontual emanando do sol
+    const sunLight = new THREE.PointLight(0xffaa33, 3, 200);
+    scene.add(sunLight);
+
+    // ─── TERRA ───────────────────────────────────────────────────────────────
     const earthGeometry = new THREE.SphereGeometry(2.1, 64, 32);
     const earthTexture = textureLoader.load("./textures/2k_earth_daymap.jpg");
-    const earthMaterial = new THREE.MeshBasicMaterial({map: earthTexture});
+    const earthMaterial = new THREE.MeshBasicMaterial({ map: earthTexture });
     const earth = new THREE.Mesh(earthGeometry, earthMaterial);
     earth.position.set(-23, 0, 0);
     scene.add(earth);
 
-    //Criação do Mercúrio
+    // ─── MERCÚRIO ─────────────────────────────────────────────────────────────
     const mercGeometry = new THREE.SphereGeometry(0.9, 64, 32);
-    const texturemercLoader = new THREE.TextureLoader();
     const mercTexture = textureLoader.load("./textures/2k_mercury.jpg");
     const normalTexture = textureLoader.load("./textures/normal_bump_texture");
-    const mercMaterial = new THREE.MeshBasicMaterial({map: mercTexture, normalMap: normalTexture});
+    const mercMaterial = new THREE.MeshBasicMaterial({ map: mercTexture, normalMap: normalTexture });
     const merc = new THREE.Mesh(mercGeometry, mercMaterial);
     merc.position.set(10, 0, 0);
     scene.add(merc);
 
-    //Criação de Vênus
+    // ─── VÊNUS ───────────────────────────────────────────────────────────────
     const venusGeometry = new THREE.SphereGeometry(2.0, 64, 32);
     const venusTexture = textureLoader.load("./textures/2k_venus.jpg");
-    const venusMaterial = new THREE.MeshBasicMaterial({map: venusTexture});
+    const venusMaterial = new THREE.MeshBasicMaterial({ map: venusTexture });
     const venus = new THREE.Mesh(venusGeometry, venusMaterial);
     venus.position.set(0, 0, 0);
     scene.add(venus);
+
+    // ─── PEQUENO PRÍNCIPE ─────────────────────────────────────────────────────
     let little_prince;
     const gltfLoader = new GLTFLoader();
     gltfLoader.load('./models/little_prince.glb', (gltf) => {
       const object = gltf.scene;
-      console.log('Objeto GLB carregado:', object);
-
-       // REDUZIR MUITO A ESCALA primeiro
-      object.scale.set(0.022, 0.022, 0.022); // Comece pequeno
-
-      // Posicionar EXATAMENTE acima do Mercúrio
-      object.position.set(10, 2.5, 0); // x=10 (mercúrio), y=3 (acima), z=0
-
-      // Rotacionar se necessário
-      object.rotation.x = 0;
+      object.scale.set(0.022, 0.022, 0.022);
+      object.position.set(10, 2.5, 0);
       object.rotation.y = -5;
-      object.rotation.z = 0;
-
       scene.add(object);
       little_prince = object;
-      console.log('Objeto adicionado à cena');
     }, undefined, (error) => {
       console.error('Erro ao carregar objeto:', error);
     });
 
-
-
-    // Nuvem de poeira
+    // ─── NUVEM DE POEIRA ──────────────────────────────────────────────────────
     const mainCosmicDustTexture = textureLoader.load("./textures/main_cosmic_dust.png");
     const materialSprite = new THREE.MeshStandardMaterial({
-          map: mainCosmicDustTexture,
-          side: THREE.DoubleSide,
-          transparent: true,
-          opacity: 1,
-          blending: THREE.AdditiveBlending
-      });
-
-    const geometrySphere = new THREE.IcosahedronGeometry(850, 15); // Mais segmentos = textura mais suave
+      map: mainCosmicDustTexture,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 1,
+      blending: THREE.AdditiveBlending
+    });
+    const geometrySphere = new THREE.IcosahedronGeometry(850, 15);
     const geometrySphere_ = new THREE.Mesh(geometrySphere, materialSprite);
     scene.add(geometrySphere_);
 
-
-
-
-    // Adicionar estrelas
+    // ─── ESTRELAS ────────────────────────────────────────────────────────────
     const geometry = new THREE.BufferGeometry();
     const vertices = [];
     for (let i = 0; i < 10000; i++) {
-        const x = THREE.MathUtils.randFloatSpread( 2000 );
-	    const y = THREE.MathUtils.randFloatSpread( 2000 );
-	    const z = THREE.MathUtils.randFloatSpread( 2000 );
-	    vertices.push( x, y, z );
+      vertices.push(
+        THREE.MathUtils.randFloatSpread(2000),
+        THREE.MathUtils.randFloatSpread(2000),
+        THREE.MathUtils.randFloatSpread(2000)
+      );
     }
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
     const material_ = new THREE.PointsMaterial({ color: 0x888888, size: 1 });
     const points = new THREE.Points(geometry, material_);
     scene.add(points);
 
+    // ─── CÂMERA ───────────────────────────────────────────────────────────────
     let useOrtho = true;
     let cameraused = useOrtho ? camera : camera2;
     window.addEventListener("keydown", (event) => {
@@ -166,41 +341,55 @@
         cameraused = useOrtho ? camera : camera2;
       }
     });
+
+    // ─── ANIMAÇÃO ─────────────────────────────────────────────────────────────
     let venus_angle = 0;
-    let merc_angle = 0;
+    let merc_angle  = 0;
     let earth_angle = 0;
-    // Animação do Sol e Terra (necessário, se não a cena não será renderizada)
+
+    const clock = new THREE.Clock();
+
     function animate() {
       requestAnimationFrame(animate);
-      sun.rotation.y += 0.0067;
+
+      const elapsed = clock.getElapsedTime();
+
+      // Atualizar uniforms de tempo dos shaders
+      sunUniforms.uTime.value     = elapsed;
+      coronaUniforms.uTime.value  = elapsed;
+      glowMaterial.uniforms.uTime.value = elapsed;
+      glowMaterial.uniforms.cameraPosition.value.copy(camera.position);
+
+      // Rotações
+      sun.rotation.y  += 0.0067;
       earth.rotation.y += 0.2;
-      //Animação do Mercurio
-      merc.rotation.y += 0.0034;
-      //Rotação de Vênus
+      merc.rotation.y  += 0.0034;
       venus.rotation.y += 0.0008;
-      venus.position.set(16*Math.cos(venus_angle),0,16*Math.sin(venus_angle));
-      venus_angle += 2*Math.PI/225
-      venus_angle = venus_angle%(2*Math.PI);
-      merc.position.set(-10*Math.cos(merc_angle),0,-10*Math.sin(merc_angle))
-      little_prince.position.set(-10*Math.cos(merc_angle),2.5,-10*Math.sin(merc_angle))
-      merc_angle += 2*Math.PI/88;
-      merc_angle = merc_angle%(2*Math.PI);
-      earth.position.set(24*Math.cos(earth_angle),0,24*Math.sin(earth_angle));
-      earth_angle += 2*Math.PI/365;
-      earth_angle = earth_angle%(2*Math.PI);
+
+      // Órbitas
+      venus.position.set(16 * Math.cos(venus_angle), 0, 16 * Math.sin(venus_angle));
+      venus_angle = (venus_angle + 2 * Math.PI / 225) % (2 * Math.PI);
+
+      merc.position.set(-10 * Math.cos(merc_angle), 0, -10 * Math.sin(merc_angle));
+      if (little_prince) {
+        little_prince.position.set(-10 * Math.cos(merc_angle), 2.5, -10 * Math.sin(merc_angle));
+      }
+      merc_angle = (merc_angle + 2 * Math.PI / 88) % (2 * Math.PI);
+
+      earth.position.set(24 * Math.cos(earth_angle), 0, 24 * Math.sin(earth_angle));
+      earth_angle = (earth_angle + 2 * Math.PI / 365) % (2 * Math.PI);
+
       controls.update();
       renderer.render(scene, cameraused);
     }
 
     animate();
 
-    // Ajuste do tamanho da janela em caso de redimensionamento (zoom in e zoom out)
     window.addEventListener('resize', () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
-
   </script>
 </body>
 </html>
