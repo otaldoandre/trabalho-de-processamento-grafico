@@ -56,6 +56,8 @@
 
     // ─── SHADER DO SOL (referencia: vídeo do Yuri Artiukh) ────────────────────────────────────────
     const sunVertexShader = `
+      precision highp float;
+
       uniform mat4 projectionMatrix;
       uniform mat4 viewMatrix;
       uniform mat4 modelMatrix;
@@ -79,7 +81,7 @@
     `;
 
     const sunFragmentShader = `
-      precision mediump float;
+      precision highp float;
 
       uniform float uTime;
       uniform vec3 cameraPosition; // <-- ADICIONADO: Posição real da câmera
