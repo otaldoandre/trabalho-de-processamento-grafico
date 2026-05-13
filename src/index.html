@@ -490,6 +490,34 @@
 
     scene.add(rocket);
 
+    // ─── ESTRELA CADENTE ──────────────────────────────────────────────────────
+    const shootingStarGroup = new THREE.Group();
+
+    const starGeo = new THREE.CylinderGeometry(0.02, 0.2, 10, 8);
+    starGeo.rotateZ(Math.PI / 2); 
+
+    const starMat = new THREE.MeshBasicMaterial({ 
+      color: 0xffffff, 
+      transparent: true,
+      opacity: 0.8, 
+      blending: THREE.AdditiveBlending, 
+      depthWrite: false
+    });
+
+    const shootingStarMesh = new THREE.Mesh(starGeo, starMat);
+    shootingStarGroup.add(shootingStarMesh);
+
+    const starHeadGeo = new THREE.SphereGeometry(0.12, 16, 16);
+    const starHeadMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const starHead = new THREE.Mesh(starHeadGeo, starHeadMat);
+    starHead.position.x = -5; 
+    shootingStarGroup.add(starHead);
+
+    shootingStarGroup.position.set(60, 25, -15);
+    shootingStarGroup.rotation.z = Math.PI / 8; 
+    
+    scene.add(shootingStarGroup);
+
     // ─── CÂMERA ───────────────────────────────────────────────────────────────
     let useOrtho = true;
     let cameraused = useOrtho ? camera : camera2;
@@ -555,6 +583,20 @@
 
       earth.position.set(24 * Math.cos(earth_angle), 0, 24 * Math.sin(earth_angle));
       earth_angle = (earth_angle + 2 * Math.PI / 365) % (2 * Math.PI);
+
+      // Animação da Estrela Cadente
+      shootingStarGroup.position.x -= 0.8; 
+      shootingStarGroup.position.y -= 0.35; 
+
+      if (shootingStarGroup.position.x < -60) {
+        shootingStarGroup.position.x = 60 + Math.random() * 40; 
+        shootingStarGroup.position.y = 15 + Math.random() * 20; 
+        shootingStarGroup.position.z = -10 - Math.random() * 20; 
+ 
+        const scale = 0.5 + Math.random() * 0.8;
+        shootingStarGroup.scale.set(scale, scale, scale);
+        starMat.opacity = 0.4 + Math.random() * 0.6;
+      }
 
       // Pulso das chamas
       const flamePulse = 0.88 + 0.12 * Math.sin(elapsed * 18.0);
