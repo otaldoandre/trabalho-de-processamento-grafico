@@ -220,6 +220,9 @@
     const sunLight = new THREE.PointLight(0xffaa33, 3, 200);
     scene.add(sunLight);
 
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.45);
+    scene.add(ambientLight);
+
     // ─── TERRA ───────────────────────────────────────────────────────────────
     const earthGeometry = new THREE.SphereGeometry(2.1, 64, 32);
     const earthTexture = textureLoader.load("./textures/2k_earth_daymap.jpg");
@@ -446,8 +449,8 @@
     // Foguete na horizontal: rotaciona 90° em Z para deitar o eixo Y na direção X
     rocket.rotation.z = -Math.PI / 2;
 
-    // Posição fixa próxima aos planetas (entre Vênus e Terra, levemente elevado)
-    rocket.position.set(20, 4, 5);
+    // Posição fixa entre Mercúrio (r=10) e Vênus (r=16), próximo ao sol
+    rocket.position.set(13, 2, 4);
 
     scene.add(rocket);
 
