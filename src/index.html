@@ -293,13 +293,13 @@
     // Grupo principal do foguete
     const rocket = new THREE.Group();
 
-    // Materiais
-    const bodyMat    = new THREE.MeshPhongMaterial({ color: 0xdde8f0, shininess: 120, specular: 0x99bbcc });
-    const noseMat    = new THREE.MeshPhongMaterial({ color: 0xff4422, shininess: 100, specular: 0xff8866 });
-    const finMat     = new THREE.MeshPhongMaterial({ color: 0xff4422, shininess: 80,  specular: 0xff6644 });
-    const windowMat  = new THREE.MeshPhongMaterial({ color: 0x88ddff, shininess: 200, specular: 0xffffff, emissive: 0x224466 });
-    const nozzleMat  = new THREE.MeshPhongMaterial({ color: 0x888888, shininess: 60 });
-    const ringMat    = new THREE.MeshPhongMaterial({ color: 0xcc3311, shininess: 80 });
+    // Materiais — MeshStandardMaterial com emissive para garantir visibilidade
+    const bodyMat   = new THREE.MeshStandardMaterial({ color: 0xdde8f0, emissive: 0x99aabb, emissiveIntensity: 0.6, metalness: 0.4, roughness: 0.4 });
+    const noseMat   = new THREE.MeshStandardMaterial({ color: 0xff4422, emissive: 0xcc2200, emissiveIntensity: 0.7, metalness: 0.2, roughness: 0.5 });
+    const finMat    = new THREE.MeshStandardMaterial({ color: 0xff4422, emissive: 0xcc2200, emissiveIntensity: 0.7, metalness: 0.2, roughness: 0.5 });
+    const windowMat = new THREE.MeshStandardMaterial({ color: 0x88ddff, emissive: 0x2266aa, emissiveIntensity: 0.9, metalness: 0.1, roughness: 0.1 });
+    const nozzleMat = new THREE.MeshStandardMaterial({ color: 0x888888, emissive: 0x444444, emissiveIntensity: 0.5, metalness: 0.7, roughness: 0.4 });
+    const ringMat   = new THREE.MeshStandardMaterial({ color: 0xcc3311, emissive: 0xaa2200, emissiveIntensity: 0.7, metalness: 0.2, roughness: 0.5 });
 
     // Corpo cilíndrico principal
     const bodyGeo = new THREE.CylinderGeometry(0.28, 0.32, 1.6, 24);
