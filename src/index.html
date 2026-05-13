@@ -50,8 +50,10 @@
     controls.enableDamping = true;
     controls.dampingFactor = 0.1;
     controls.minDistance = 15;
-    controls.maxDistance = 30;
+    controls.maxDistance = 150;
     camera.position.set(0, 20, 100);
+    //controls.zoomSpeed = 0.5;
+    controls.target.set(0, 0, 0);
     controls.update();
 
     // ─── SHADER DO SOL ────────────────────────────────────────────────────────
@@ -261,6 +263,28 @@
       console.error('Erro ao carregar objeto:', error);
     });
 
+    // ─── GLOBO DE NEVE ─────────────────────────────────────────────────────
+  gltfLoader.load('./models/globom.glb', (gltf) => {
+      const globo = gltf.scene;
+
+      // Fazer com que o globo fique como o centro da cena
+      const box = new THREE.Box3().setFromObject(globo);
+      const center = new THREE.Vector3();
+      box.getCenter(center);
+      globo.position.sub(center);
+
+      // Group que vai agir como o pai da nossa cena atual
+      const globoParent = new THREE.Group();
+      globoParent.add(globo);
+      globoParent.scale.set(15, 15, 15);
+
+      // Mover sistema solar para o centro
+      globoParent.position.set(0, 0, 0);
+
+      scene.add(globoParent);
+  });
+
+
     // ─── NUVEM DE POEIRA ──────────────────────────────────────────────────────
     const mainCosmicDustTexture = textureLoader.load("./textures/main_cosmic_dust.png");
     const materialSprite = new THREE.MeshStandardMaterial({
@@ -270,18 +294,18 @@
       opacity: 1,
       blending: THREE.AdditiveBlending
     });
-    const geometrySphere = new THREE.IcosahedronGeometry(850, 15);
+    const geometrySphere = new THREE.IcosahedronGeometry(55, 15)
     const geometrySphere_ = new THREE.Mesh(geometrySphere, materialSprite);
     scene.add(geometrySphere_);
 
     // ─── ESTRELAS ────────────────────────────────────────────────────────────
     const geometry = new THREE.BufferGeometry();
     const vertices = [];
-    for (let i = 0; i < 10000; i++) {
+    for (let i = 0; i < 55; i++) {
       vertices.push(
-        THREE.MathUtils.randFloatSpread(2000),
-        THREE.MathUtils.randFloatSpread(2000),
-        THREE.MathUtils.randFloatSpread(2000)
+        THREE.MathUtils.randFloatSpread(69),
+        THREE.MathUtils.randFloatSpread(80),
+        THREE.MathUtils.randFloatSpread(69)
       );
     }
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
