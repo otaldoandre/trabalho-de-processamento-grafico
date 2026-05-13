@@ -27,7 +27,7 @@
     scene.fog = new THREE.Fog(0x030342, 0.002);
 
     const camera = new THREE.PerspectiveCamera(
-      75, window.innerWidth / window.innerHeight, 0.1, 1000
+      45, window.innerWidth / window.innerHeight, 0.1, 3000
     );
     camera.position.z = 15;
 
@@ -219,7 +219,7 @@
     const glow = new THREE.Mesh(glowGeometry, glowMaterial);
     scene.add(glow);
 
-    const sunLight = new THREE.PointLight(0xffaa33, 3, 200);
+    const sunLight = new THREE.PointLight(0xffaa33, 3000, 250);
     scene.add(sunLight);
 
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.45);
@@ -228,7 +228,11 @@
     // ─── TERRA ───────────────────────────────────────────────────────────────
     const earthGeometry = new THREE.SphereGeometry(2.1, 64, 32);
     const earthTexture = textureLoader.load("./textures/2k_earth_daymap.jpg");
-    const earthMaterial = new THREE.MeshBasicMaterial({ map: earthTexture });
+    const earthMaterial = new THREE.MeshPhongMaterial({
+    map: earthTexture,
+    shininess: 0.1,
+    specular: new THREE.Color(0x333333)
+});
     const earth = new THREE.Mesh(earthGeometry, earthMaterial);
     earth.position.set(-23, 0, 0);
     scene.add(earth);
@@ -236,7 +240,11 @@
     // ─── MERCÚRIO ─────────────────────────────────────────────────────────────
     const mercGeometry = new THREE.SphereGeometry(0.9, 64, 32);
     const mercTexture = textureLoader.load("./textures/2k_mercury.jpg");
-    const mercMaterial = new THREE.MeshBasicMaterial({ map: mercTexture });
+    const mercMaterial = new THREE.MeshPhongMaterial({
+    map: mercTexture,
+    shininess: 0.1,
+    specular: new THREE.Color(0x333333)
+});
     const merc = new THREE.Mesh(mercGeometry, mercMaterial);
     merc.position.set(10, 0, 0);
     scene.add(merc);
@@ -244,7 +252,11 @@
     // ─── VÊNUS ───────────────────────────────────────────────────────────────
     const venusGeometry = new THREE.SphereGeometry(2.0, 64, 32);
     const venusTexture = textureLoader.load("./textures/2k_venus.jpg");
-    const venusMaterial = new THREE.MeshBasicMaterial({ map: venusTexture });
+    const venusMaterial = new THREE.MeshPhongMaterial({
+    map: venusTexture,
+    shininess: 0.1,
+    specular: new THREE.Color(0x333333)
+});
     const venus = new THREE.Mesh(venusGeometry, venusMaterial);
     venus.position.set(0, 0, 0);
     scene.add(venus);
