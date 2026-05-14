@@ -513,8 +513,8 @@
     starHead.position.x = -5; 
     shootingStarGroup.add(starHead);
 
-    shootingStarGroup.position.set(60, 25, -15);
-    shootingStarGroup.rotation.z = Math.PI / 8; 
+    shootingStarGroup.position.set(35, 15, -10); 
+    shootingStarGroup.rotation.z = Math.PI / 8;
     
     scene.add(shootingStarGroup);
 
@@ -588,11 +588,11 @@
       shootingStarGroup.position.x -= 0.8; 
       shootingStarGroup.position.y -= 0.35; 
 
-      if (shootingStarGroup.position.x < -60) {
-        shootingStarGroup.position.x = 60 + Math.random() * 40; 
-        shootingStarGroup.position.y = 15 + Math.random() * 20; 
-        shootingStarGroup.position.z = -10 - Math.random() * 20; 
- 
+      if (shootingStarGroup.position.x < -35) {
+        shootingStarGroup.position.x = 35 + Math.random() * 5; 
+        shootingStarGroup.position.y = 10 + Math.random() * 15; 
+        shootingStarGroup.position.z = -10 - Math.random() * 10; 
+        
         const scale = 0.5 + Math.random() * 0.8;
         shootingStarGroup.scale.set(scale, scale, scale);
         starMat.opacity = 0.4 + Math.random() * 0.6;
