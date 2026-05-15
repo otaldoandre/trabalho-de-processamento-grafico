@@ -91,9 +91,8 @@ void main() {
     camera.position.z = 15;
 
     const camera2 = new THREE.PerspectiveCamera(
-      80, window.innerWidth / window.innerHeight, 0.1, 1000
+      35, window.innerWidth / window.innerHeight, 0.1, 10000
     );
-    camera2.position.z = 18;
     const w = 1920;
     const h = 1080;
     const fullWidth = w * 3;
@@ -114,6 +113,17 @@ void main() {
     //controls.zoomSpeed = 0.5;
     controls.target.set(0, 0, 0);
     controls.update();
+
+    const controls2 = new OrbitControls(camera2, renderer.domElement);
+    controls2.enableDamping = true;
+    controls2.dampingFactor = 0.1;
+    controls2.minDistance = 15;
+    controls2.maxDistance =450;
+    
+    camera2.position.set(0, 0, 32);
+    //controls.zoomSpeed = 0.5;
+    controls2.target.set(0, 0, 0);
+    controls2.update();
 
     // ─── SHADER DO SOL ────────────────────────────────────────────────────────
     const sunVertexShader = `
