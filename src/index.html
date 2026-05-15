@@ -91,13 +91,9 @@ void main() {
     camera.position.z = 15;
 
     const camera2 = new THREE.PerspectiveCamera(
-      35, window.innerWidth / window.innerHeight, 0.1, 10000
+      45, window.innerWidth / window.innerHeight, 0.1, 10000
     );
-    const w = 1920;
-    const h = 1080;
-    const fullWidth = w * 3;
-    const fullHeight = h * 2;
-    camera2.setViewOffset(fullWidth, fullHeight, 500, 500, w, h);
+    
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -110,7 +106,6 @@ void main() {
     controls.minDistance = 15;
     controls.maxDistance =450;
     camera.position.set(0, 20, 50);
-    //controls.zoomSpeed = 0.5;
     controls.target.set(0, 0, 0);
     controls.update();
 
@@ -118,11 +113,10 @@ void main() {
     controls2.enableDamping = true;
     controls2.dampingFactor = 0.1;
     controls2.minDistance = 15;
-    controls2.maxDistance =450;
+    controls2.maxDistance = 3000;
     
-    camera2.position.set(0, 0, 32);
-    //controls.zoomSpeed = 0.5;
-    controls2.target.set(0, 0, 0);
+    camera2.position.set(180, -100, 600);
+    controls2.target.set(180, -372.03, 155);
     controls2.update();
 
     // ─── SHADER DO SOL ────────────────────────────────────────────────────────
